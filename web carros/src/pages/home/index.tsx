@@ -78,7 +78,7 @@ export function Home() {
           <div className="px-2 pb-2">
             <span className="text-black">Porto Alegre - RS</span>
           </div>
-        </section>
+        </section> 
         
       </main>
     </Container>
