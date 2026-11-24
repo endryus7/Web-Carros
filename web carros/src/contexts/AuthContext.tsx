@@ -1,5 +1,5 @@
 import { type ReactNode, createContext, useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from '../services/firebaseConnection'
 
 interface AuthProviderProps{
@@ -9,6 +9,8 @@ interface AuthProviderProps{
 type AuthContextData = {
     signed: boolean;
     loadingAuth: boolean; 
+    handleInfoUser: ({name, email, uid}: UserProps) => void;
+    user: UserProps | null;
 }
 
 interface UserProps{
@@ -49,11 +51,21 @@ function AuthProvider({ children }: AuthProviderProps){
 
     }, [])
 
+    function handleInfoUser({ name, email, uid}: UserProps){
+       setUser({
+        name,
+        email,
+        uid
+       })
+    }
+
     return(
     <AuthContext.Provider 
         value={{ 
             signed: !!user,
             loadingAuth,
+            handleInfoUser,
+            user
         }}
     >
         {children}
