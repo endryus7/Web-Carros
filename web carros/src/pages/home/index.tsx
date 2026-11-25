@@ -1,6 +1,58 @@
+import { useState, useEffect } from "react";
 import { Container } from "../../components/container";
+import { Link } from "react-router";
+
+import { collection, query, getDocs, orderBy } from "firebase/firestore";
+import { db } from "../../services/firebaseConnection";
+
+interface CarsProps {
+  id: string;
+  name: string;
+  year: string;
+  uid: string;
+  price: string | number;
+  city: string;
+  km: string;
+  images: CarImageProps[];
+}
+
+interface CarImageProps {
+  name: string;
+  uid: string;
+  url: string;
+}
 
 export function Home() {
+  const [cars, setCars] = useState<CarsProps[]>([]);
+
+  useEffect(() => {
+    function loadCars() {
+      const carsRef = collection(db, "cars");
+      const queryRef = query(carsRef, orderBy("created", "desc"));
+
+      getDocs(queryRef).then((snapshot) => {
+        let listcars = [] as CarsProps[];
+
+        snapshot.forEach((doc) => {
+          listcars.push({
+            id: doc.id,
+            name: doc.data().name,
+            year: doc.data().year,
+            km: doc.data().km,
+            city: doc.data().city,
+            price: doc.data().price,
+            images: doc.data().images,
+            uid: doc.data().uid,
+          });
+        });
+
+        setCars(listcars);
+      });
+    }
+
+    loadCars();
+  });
+
   return (
     <Container>
       <section className="bg-white p-4 rounded-lg w-full max-w-3xl mx-auto flex justify-center items-center gap-2">
@@ -19,67 +71,33 @@ export function Home() {
       </h1>
 
       <main className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {cars.map((car) => (
+          <Link to={`/car/${car.id}`} key={car.id}>
+            <section className="w-full bg-white rounded-lg">
+              <img
+                className="w-full rounded-lg mb-2 max-h-72 hover:scale-105 transition-all"
+                src={car.images[0].url}
+                alt={car.name}
+              />
+              <p className="font-bold mt-1 mb-2 px-2">{car.name}</p>
 
-        <section className="w-full bg-white rounded-lg">
-          <img 
-            className="w-full rounded-lg mb-2 max-h-72 hover:scale-105 transition-all"
-            src="https://image.webmotors.com.br/_fotos/anunciousados/gigante/2026/202611/20261119/byd-king-1-5-dmi-phev-gs-automatico-wmimagem19303606737.webp?s=fill&w=552&h=414&q=60" alt="carro" />
-          <p className="font-bold mt-1 mb-2 px-2">BYD KING</p>
+              <div className="flex flex-col px-2">
+                <span className="text-zinc-700 mb-6">
+                  Ano {car.year} | {car.km} km
+                </span>
+                <strong className="text-black font-medium text-xl">
+                  R$ {car.price}
+                </strong>
+              </div>
 
-          <div className="flex flex-col px-2">
-            <span className="text-zinc-700 mb-6">Ano 2024/2025 | 56.000 km</span>
-            <strong className="text-black font-medium text-xl">R$ 190.000</strong>
-          </div>
+              <div className="w-full h-px bg-slate-200 my-2"></div>
 
-          <div className="w-full h-px bg-slate-200 my-2">
-
-          </div>
-
-          <div className="px-2 pb-2">
-            <span className="text-black">Porto Alegre - RS</span>
-          </div>
-        </section>
-
-        <section className="w-full bg-white rounded-lg">
-          <img 
-            className="w-full rounded-lg mb-2 max-h-72 hover:scale-105 transition-all"
-            src="https://image.webmotors.com.br/_fotos/anunciousados/gigante/2026/202611/20261119/byd-king-1-5-dmi-phev-gs-automatico-wmimagem19303606737.webp?s=fill&w=552&h=414&q=60" alt="carro" />
-          <p className="font-bold mt-1 mb-2 px-2">BYD KING</p>
-
-          <div className="flex flex-col px-2">
-            <span className="text-zinc-700 mb-6">Ano 2024/2025 | 56.000 km</span>
-            <strong className="text-black font-medium text-xl">R$ 190.000</strong>
-          </div>
-
-          <div className="w-full h-px bg-slate-200 my-2">
-
-          </div>
-
-          <div className="px-2 pb-2">
-            <span className="text-black">Porto Alegre - RS</span>
-          </div>
-        </section>
-
-        <section className="w-full bg-white rounded-lg">
-          <img 
-            className="w-full rounded-lg mb-2 max-h-72 hover:scale-105 transition-all"
-            src="https://image.webmotors.com.br/_fotos/anunciousados/gigante/2026/202611/20261119/byd-king-1-5-dmi-phev-gs-automatico-wmimagem19303606737.webp?s=fill&w=552&h=414&q=60" alt="carro" />
-          <p className="font-bold mt-1 mb-2 px-2">BYD KING</p>
-
-          <div className="flex flex-col px-2">
-            <span className="text-zinc-700 mb-6">Ano 2024/2025 | 56.000 km</span>
-            <strong className="text-black font-medium text-xl">R$ 190.000</strong>
-          </div>
-
-          <div className="w-full h-px bg-slate-200 my-2">
-
-          </div>
-
-          <div className="px-2 pb-2">
-            <span className="text-black">Porto Alegre - RS</span>
-          </div>
-        </section> 
-        
+              <div className="px-2 pb-2">
+                <span className="text-black">{car.city}</span>
+              </div>
+            </section>
+          </Link>
+        ))}
       </main>
     </Container>
   );

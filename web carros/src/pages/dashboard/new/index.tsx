@@ -186,7 +186,7 @@ export function New() {
         ))}
       </div>
 
-      <div className="w-full bg-white p-3 rounded-lg flex flex-col sm: flex-row items-center gap-2 mt-2">
+      <div className="w-full bg-white p-3 rounded-lg flex flex-col sm:flex-row items-center gap-2 mt-2">
         <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
 
           <div className="mb-3">
