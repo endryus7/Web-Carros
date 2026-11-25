@@ -52,7 +52,7 @@ export function Home() {
     }
 
     loadCars();
-  });
+  }, [] );
 
   function handleImageLoad(id: string){
     setLoadImages((prevImageLoaded) => [...prevImageLoaded, id])
