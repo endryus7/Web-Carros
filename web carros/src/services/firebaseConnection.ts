@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAzEvu6bU4K3jzgpqDJzi9dqY-1C-fck-w",
@@ -14,8 +14,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const db = getFirestore(app)
-const auth = getAuth(app)
-const storage = getStorage(app)
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
-export { db, auth, storage}
+// Conecta apenas o Storage ao emulador local no seu computador
+connectStorageEmulator(storage, "127.0.0.1", 9199);
+
+export { db, auth, storage };
