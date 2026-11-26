@@ -12,6 +12,8 @@ import { auth } from '../../services/firebaseConnection'
 import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 import { AuthContext } from '../../contexts/AuthContext'
 
+import toast from "react-hot-toast";
+
 const schema = z.object({
   name: z.string().nonempty("O campo nome é obrigatório"),
   email: z
@@ -56,6 +58,7 @@ export function Register() {
       })
 
       console.log("Cadastrado com sucesso")
+      toast.success("Bem vindo ao webcarros!")
       navigate("/dashboard", {replace: true})
     })
     .catch((error) => {

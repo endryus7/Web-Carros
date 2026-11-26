@@ -76,7 +76,7 @@ export function Home() {
 
     const querySnapshot = await getDocs(q);
 
-    let listcars = [] as CarsProps[]
+    let listcars = [] as CarsProps[];
 
     querySnapshot.forEach((doc) => {
       listcars.push({
@@ -91,8 +91,7 @@ export function Home() {
       });
     });
 
-    setCars(listcars)
-
+    setCars(listcars);
   }
 
   return (
@@ -104,6 +103,11 @@ export function Home() {
           placeholder="Digite o nome do carro..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearchCar();
+            }
+          }}
         />
         <button
           className="bg-red-500 h-9 px-8 rounded-lg text-white font-medium text-lg"
