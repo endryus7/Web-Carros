@@ -1,5 +1,4 @@
-import { useState, type ChangeEvent } from "react";
-import { useContext } from "react";
+import { useState, type ChangeEvent, useContext } from "react";
 import { Container } from "../../../components/container";
 import { DashboardHeader } from "../../../components/painelheader";
 
@@ -9,19 +8,11 @@ import { Input } from "../../../components/input";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthContext } from "../../../contexts/AuthContext";
-import {v4 as uuidV4} from 'uuid' 
 
-import { storage, db } from "../../../services/firebaseConnection";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject
-} from 'firebase/storage'
+import { db } from "../../../services/firebaseConnection";
 import { addDoc, collection } from "firebase/firestore";
 
 import toast from "react-hot-toast";
-
 
 const schema = z.object({
   name: z.string().nonempty("O campo nome é obrigatório"),
@@ -41,7 +32,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-interface ImageItemProps{
+interface ImageItemProps {
   uid: string;
   name: string;
   previewUrl: string;
@@ -49,7 +40,7 @@ interface ImageItemProps{
 }
 
 export function New() {
-  const { user } = useContext(AuthContext)
+  const { user } = useContext(AuthContext);
   const {
     register,
     handleSubmit,
@@ -60,64 +51,73 @@ export function New() {
     mode: "onChange",
   });
 
-  const [carImages, setCarImages] = useState<ImageItemProps[]>([])
+  const [carImages, setCarImages] = useState<ImageItemProps[]>([]);
 
-  async function handleFile(e: ChangeEvent<HTMLInputElement>){
-    if(e.target.files && e.target.files[0]){
-      const image = e.target.files[0]
+  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      const image = e.target.files[0];
 
-      if(image.type === 'image/jpeg' || image.type === 'image/png'){
-        // Enviar pro banco a imagem...
-        await handleUpload(image)
-      }else{
-        alert("Envie uma imagem jpeg ou png!")
-        return
+      if (image.type === "image/jpeg" || image.type === "image/png") {
+        await handleUpload(image);
+      } else {
+        toast.error("Envie uma imagem jpeg ou png!");
+        return;
       }
     }
   }
 
-  async function handleUpload(image: File){
-    if(!user?.uid){
-      return
+  async function handleUpload(image: File) {
+    if (!user?.uid) {
+      return;
     }
 
-    const currentUid = user?.uid
-    const uidImage = uuidV4()
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("upload_preset", "webcarros");
 
-    const uploadRef = ref(storage, `images/${currentUid}/${uidImage}`)
+    const baseUrl = "https://api." + "cloudinary.com";
+    const endpoint = `${baseUrl}/v1_1/czj7xdeg/image/upload`;
 
-    uploadBytes(uploadRef, image)
-    .then((snapshot) => {
-      getDownloadURL(snapshot.ref).then((downLoadURL) => {
-        const imageItem = {
-          name: uidImage,
-          uid: currentUid,
-          previewUrl: URL.createObjectURL(image),
-          url: downLoadURL,
-        }
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+      });
 
-        setCarImages((images) => [...images, imageItem])
-        toast.success("Imagem cadastrada com sucesso!")
-      })
-    })
+      if (!response.ok) {
+        throw new Error("Erro no upload da imagem");
+      }
 
+      const data = await response.json();
+
+      const imageItem = {
+        name: data.public_id,
+        uid: user.uid,
+        previewUrl: URL.createObjectURL(image),
+        url: data.secure_url,
+      };
+
+      setCarImages((images) => [...images, imageItem]);
+      toast.success("Imagem cadastrada com sucesso!");
+    } catch (err) {
+      console.log("ERRO AO FAZER UPLOAD", err);
+      toast.error("Erro ao enviar imagem!");
+    }
   }
 
   function onSubmit(data: FormData) {
-
-    if(carImages.length === 0){
-      toast.error("Envie pelo menos 1 imagem!")
-      
-      return
+    if (carImages.length === 0) {
+      toast.error("Envie pelo menos 1 imagem!");
+      return;
     }
 
-    const carListImages = carImages.map( car => {
-      return{
+    const carListImages = carImages.map((car) => {
+      return {
         uid: car.uid,
         name: car.name,
         url: car.url,
-      }
-    })
+      };
+    });
 
     addDoc(collection(db, "cars"), {
       name: data.name.toUpperCase(),
@@ -133,29 +133,19 @@ export function New() {
       uid: user?.uid,
       images: carListImages,
     })
-    .then(() => {
-      reset()
-      setCarImages([])
-      console.log("Cadastrado com sucesso!")
-      toast.success("Carro cadastrado com sucesso!")
-    })
-    .catch((error) => {
-      console.log(error)
-    })
-    
+      .then(() => {
+        reset();
+        setCarImages([]);
+        console.log("Cadastrado com sucesso!");
+        toast.success("Carro cadastrado com sucesso!");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
-  async function handleDeleteImage(item: ImageItemProps){
-    const imagePath  = `images/${item.uid}/${item.name}`
-
-    const imageRef = ref(storage, imagePath)
-
-    try{
-      await deleteObject(imageRef)
-      setCarImages(carImages.filter((car) => car.url !== item.url))
-    }catch(err){
-      console.log("ERRO AO DELETAR")
-    }
+  function handleDeleteImage(item: ImageItemProps) {
+    setCarImages(carImages.filter((car) => car.url !== item.url));
   }
 
   return (
@@ -163,7 +153,10 @@ export function New() {
       <DashboardHeader />
 
       <div className="w-full bg-white p-3 rounded-lg flex flex-col sm:flex-row items-center gap-2">
-        <button className="border-2 w-48 rounded-lg flex items-center justify-center cursor-pointer border-gray-600 h-32 md:w-48">
+        <button
+          type="button"
+          className="border-2 w-48 rounded-lg flex items-center justify-center cursor-pointer border-gray-600 h-32 md:w-48"
+        >
           <div className="absolute cursor-pointer">
             <FiUpload size={30} color="#000" />
           </div>
@@ -177,13 +170,20 @@ export function New() {
           </div>
         </button>
 
-        {carImages.map( item => (
-          <div key={item.name} className="w-full h-32 flex items-center justify-center relative">
-            <button className="absolute" onClick={() => handleDeleteImage(item)}>
+        {carImages.map((item) => (
+          <div
+            key={item.name}
+            className="w-full h-32 flex items-center justify-center relative"
+          >
+            <button
+              type="button"
+              className="absolute"
+              onClick={() => handleDeleteImage(item)}
+            >
               <FiTrash size={28} color="#fff" />
             </button>
-            <img 
-              src={item.previewUrl} 
+            <img
+              src={item.previewUrl}
               className="rounded-lg w-full h-32 object-cover"
               alt="Foto do carro"
             />
@@ -193,7 +193,6 @@ export function New() {
 
       <div className="w-full bg-white p-3 rounded-lg flex flex-col sm:flex-row items-center gap-2 mt-2">
         <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
-
           <div className="mb-3">
             <p className="mb-2 font-medium">Nome do carro</p>
             <Input
@@ -240,7 +239,7 @@ export function New() {
             </div>
           </div>
 
-           <div className="flex w-full mb-3 flex-row items-center gap-4">
+          <div className="flex w-full mb-3 flex-row items-center gap-4">
             <div className="w-full">
               <p className="mb-2 font-medium">Telefone / Whatsapp</p>
               <Input
@@ -283,15 +282,18 @@ export function New() {
               name="description"
               id="description"
               placeholder="Digite a descrição completa sobre o carro..."
-            >
-              {errors.description && <p className="mb-1 text-red-500">{errors.description.message}</p>}
-            </textarea>
+            />
+            {errors.description && (
+              <p className="mb-1 text-red-500">{errors.description.message}</p>
+            )}
           </div>
 
-          <button type="submit" className="w-full rounded-md bg-zinc-900 text-white font-medium h-10">
+          <button
+            type="submit"
+            className="w-full rounded-md bg-zinc-900 text-white font-medium h-10"
+          >
             Cadastrar
           </button>
-
         </form>
       </div>
     </Container>

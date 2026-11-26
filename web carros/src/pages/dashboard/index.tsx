@@ -12,8 +12,7 @@ import {
   doc,
   deleteDoc,
 } from "firebase/firestore";
-import { db, storage } from "../../services/firebaseConnection";
-import { ref, deleteObject } from "firebase/storage";
+import { db } from "../../services/firebaseConnection";
 import { AuthContext } from "../../contexts/AuthContext";
 
 interface CarProps {
@@ -72,21 +71,13 @@ export function Dashboard() {
   async function handleDeleteCar(car: CarProps) {
     const itemCar = car;
 
-    const docRef = doc(db, "cars", itemCar.id);
-    await deleteDoc(docRef);
-
-    itemCar.images.map(async (image) => {
-      const imagePath = `images/${image.uid}/${image.name}`;
-
-      const imageRef = ref(storage, imagePath);
-
-      try {
-        await deleteObject(imageRef);
-        setCars(cars.filter((car) => car.id !== itemCar.id));
-      } catch (err) {
-        console.log("ERRO AO EXCLUIR IMAGEM");
-      }
-    });
+    try {
+      const docRef = doc(db, "cars", itemCar.id);
+      await deleteDoc(docRef);
+      setCars(cars.filter((car) => car.id !== itemCar.id));
+    } catch (err) {
+      console.log("ERRO AO EXCLUIR CARRO", err);
+    }
   }
 
   return (
